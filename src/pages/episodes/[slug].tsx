@@ -65,8 +65,39 @@ export default function Episode({ episode }: EpisodeProps) {
 // Toda rota que possui os colchetes em volta, é necessário informar o parametro
 // getStaticPaths
 export const getStaticPaths: GetStaticPaths = async () => {
+  const { data } = await api.get("episodes", {
+    params: {
+      _limit: 2,
+      _sort: "published_at",
+      _order: "desc",
+    },
+  });
+
+  const paths = data.map(episode => {
+    return {
+      params: {
+        slug: episode.id
+      }
+    }
+  })
+
   return {
-    paths: [],
+    // Passando os paths vazios [], no momento da build, o next não vai gerar nenhum
+    // episódio de forma statica. O que determina o comportamento de uma página que não
+    // foi gerado estaticamente, é o fallback.
+
+    // Se passar fallback: false, se não foi gerado uma página estática no momento da build
+    // utilizando, nesse caso, paths: [ {params: { slug: 'NOME DO EPISÓDIO'}}], será retornado
+    // error 404.
+
+    // Se passar fallback: true. Ao acessar uma página que não foi gerada estáticasmente
+    // no momento da build, a aplicação irá fazer toda a requisição feita no GetStaticProps
+    // Porém essa, será feita pelo lado do client.
+
+    // O fallback : blocking, permite o modo increment static regeneration. Isso faz com que,
+    // o next gere as páginas estáticas a medida que essas são acessadas, e também que o next
+    // revalide essas páginas, pelo tempo passado no revalidate
+    paths,
     fallback: "blocking",
   };
 };
