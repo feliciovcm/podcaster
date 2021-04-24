@@ -1,14 +1,31 @@
 import Image from "next/image";
-import { useContext } from "react";
+import { useContext, useEffect, useRef } from "react";
 import { PlayerContext } from "../../contexts/PlayerContext";
 import styles from "./styles.module.scss";
 import Slider from "rc-slider";
 import "rc-slider/assets/index.css";
 
 export function Player() {
-  const { currentEpisodeIndex, episodeList, isPlaying } = useContext(
-    PlayerContext
-  );
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const {
+    currentEpisodeIndex,
+    episodeList,
+    isPlaying,
+    togglePlay,
+    setPlayingState,
+  } = useContext(PlayerContext);
+
+  useEffect(() => {
+    if (!audioRef.current) {
+      return;
+    }
+    if (isPlaying) {
+      audioRef.current.play();
+    } else {
+      audioRef.current.pause();
+    }
+  }, [isPlaying]);
 
   const episode = episodeList[currentEpisodeIndex];
   return (
@@ -52,7 +69,15 @@ export function Player() {
           <span>00:00</span>
         </div>
 
-        {episode && <audio src={episode.url} autoPlay />}
+        {episode && (
+          <audio
+            onPlay={() => setPlayingState(true)}
+            onPause={() => setPlayingState(false)}
+            ref={audioRef}
+            src={episode.url}
+            autoPlay
+          />
+        )}
 
         <div className={styles.buttons}>
           <button type="button" disabled={!episode}>
@@ -65,6 +90,7 @@ export function Player() {
             type="button"
             className={styles.playButton}
             disabled={!episode}
+            onClick={togglePlay}
           >
             {isPlaying ? (
               <img src="/pause.svg" alt="Pausar" />
